@@ -1,0 +1,7 @@
+[build]
+  publish = "public"
+
+[[redirects]]
+  from = "/*"
+  to = "https://attack-website.onrender.com/:splat"
+  status = 200
