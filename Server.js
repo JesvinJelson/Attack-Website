@@ -1,4 +1,3 @@
-// 1. ADD THIS LINE AT THE VERY TOP
 require("dotenv").config()
 
 const express = require("express")
@@ -17,28 +16,59 @@ app.use(cors())
 app.use(bodyParser.json())
 app.use(express.static("public"))
 
-// 2. USE ENV VARIABLE FOR SECRET
 const SECRET = process.env.JWT_SECRET
 
-// SPLUNK LOGGING
+// ============================
+// SPLUNK CONNECTION SETUP
+// ============================
+const SPLUNK_URL = process.env.SPLUNK_URL
+const SPLUNK_TOKEN = process.env.SPLUNK_TOKEN
+
+async function sendToSplunk(logData) {
+  // If no URL is set, don't try to send (prevents crashes)
+  if (!SPLUNK_URL) return
+
+  try {
+    await fetch(SPLUNK_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Splunk ${SPLUNK_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      // Splunk expects the data inside an "event" key
+      body: JSON.stringify({ event: logData })
+    })
+  } catch (error) {
+    console.error("Splunk Error:", error.message)
+  }
+}
+
+// LOGGING MIDDLEWARE
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] IP=${req.ip} METHOD=${req.method} URL=${req.url}`)
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    ip: req.ip,
+    method: req.method,
+    url: req.url
+  }
+
+  // 1. Print to Render Console
+  console.log(`[${logEntry.timestamp}] IP=${logEntry.ip} METHOD=${logEntry.method} URL=${logEntry.url}`)
+
+  // 2. Send to Splunk
+  sendToSplunk(logEntry)
+
   next()
 })
 
 // ============================
 // MONGODB ATLAS CONNECTION
 // ============================
-// 3. USE ENV VARIABLE FOR MONGO URI
 const MONGO_URI = process.env.MONGO_URI
 
 mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log("MongoDB Atlas Connected Successfully")
-  })
-  .catch(err => {
-    console.log("MongoDB Connection Failed:", err.message)
-  })
+  .then(() => console.log("MongoDB Atlas Connected Successfully"))
+  .catch(err => console.log("MongoDB Connection Failed:", err.message))
 
 // ============================
 // AUTH MIDDLEWARE
