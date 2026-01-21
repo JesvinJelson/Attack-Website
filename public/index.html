@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>Cyber Contact Vault</h2>
+<p>Secure Login System</p>
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<br><br>
+<button onclick="signup()">Signup</button>
+<button onclick="login()">Login</button>
+
+<script>
+async function signup() {
+  await fetch("/signup", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      email: email.value,
+      password: password.value
+    })
+  })
+  alert("Account Created. You can now login.")
+}
+
+async function login() {
+  const res = await fetch("/login", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      email: email.value,
+      password: password.value
+    })
+  })
+
+  if (!res.ok) {
+    alert("Login failed")
+    return
+  }
+
+  const data = await res.json()
+  localStorage.token = data.token
+  window.location = "dashboard.html"
+}
+</script>
+
+</body>
+</html>

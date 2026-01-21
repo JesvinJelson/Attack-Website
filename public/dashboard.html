@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>My Inner Circle</h2>
+<p>Store names and notes about people you trust</p>
+
+<input id="name" placeholder="Person's Name">
+<input id="note" placeholder="Note about them">
+
+<br><br>
+<button onclick="save()">Save Person</button>
+
+<h3>Saved People</h3>
+<ul id="list"></ul>
+
+<script>
+async function save() {
+  await fetch("/addcontact", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": localStorage.token
+    },
+    body: JSON.stringify({
+      name: name.value,
+      note: note.value
+    })
+  })
+  load()
+}
+
+async function load() {
+  const res = await fetch("/contacts", {
+    headers: {
+      "Authorization": localStorage.token
+    }
+  })
+
+  const data = await res.json()
+  list.innerHTML = ""
+
+  data.forEach(p => {
+    list.innerHTML += `<li><b>${p.name}</b> — ${p.note}</li>`
+  })
+}
+
+load()
+</script>
+
+</body>
+</html>
